@@ -22,9 +22,12 @@ export function SudokuBoard({
   onPlayCell,
 }: SudokuBoardProps) {
   return (
-    <section aria-label="Tabuleiro do sudoku" className="flex justify-center">
+    <section
+      aria-label="Tabuleiro do sudoku"
+      className="flex min-h-0 w-full justify-center"
+    >
       <div
-        className="grid aspect-square w-full max-w-[min(88vw,640px)] overflow-hidden rounded-lg border-4 border-stone-950 bg-stone-950 shadow-sm"
+        className="grid aspect-square w-full max-w-[min(92vw,calc(100dvh-210px),640px)] overflow-hidden rounded-lg border-4 border-stone-950 bg-stone-950 shadow-sm sm:max-w-[min(88vw,calc(100dvh-230px),640px)] lg:max-w-[min(62vw,calc(100dvh-230px),640px)]"
         style={{
           gridTemplateColumns: `repeat(${settings.size}, minmax(0, 1fr))`,
         }}

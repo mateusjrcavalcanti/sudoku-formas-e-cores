@@ -25,8 +25,8 @@ export function GameStatus({
         : `Escolha ${mode === "numbers" ? "um número" : "uma forma"} e complete os espaços.`;
 
   return (
-    <div className="rounded-md border border-stone-300 bg-white p-4 text-sm leading-6 text-stone-600 shadow-sm">
-      <div className="mb-2 flex items-center gap-2 font-medium text-stone-950">
+    <div className="rounded-md border border-stone-300 bg-white p-3 text-xs leading-5 text-stone-600 shadow-sm sm:text-sm sm:leading-6 lg:p-4">
+      <div className="mb-1 flex items-center gap-2 font-medium text-stone-950 sm:mb-2">
         <CheckCircle2 className="size-4 text-cyan-700" />
         Como está indo?
       </div>

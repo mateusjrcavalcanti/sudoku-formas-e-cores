@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppHeader } from "./components/AppHeader";
+import { CellOptionsDialog } from "./components/CellOptionsDialog";
 import { Confetti } from "./components/Confetti";
 import { GameStatus } from "./components/GameStatus";
 import { HowToPlayDialog } from "./components/HowToPlayDialog";
@@ -96,10 +97,12 @@ function createStartedGame(difficulty: Difficulty = defaultDifficulty): AppState
 
 export function App() {
   const [state, setState] = useState(createInitialState);
+  const isCompactLayout = useCompactLayout();
   const wasSolvedRef = useRef(isSolved(state.board, state.game.solution));
   const [celebrationKey, setCelebrationKey] = useState(0);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isSoundOpen, setIsSoundOpen] = useState(false);
+  const [selectedCell, setSelectedCell] = useState<Position | null>(null);
   const [soundEffect, setSoundEffect] = useState<SoundEffectEvent | null>(null);
   const { activeTool, board, game } = state;
   const conflicts = useMemo(() => getConflicts(board), [board]);
@@ -115,10 +118,19 @@ export function App() {
   const displayFixed = state.isStarted
     ? game.fixed
     : game.solution.map((row) => row.map(() => true));
+  const selectedCellValue = selectedCell
+    ? (board[selectedCell.row]?.[selectedCell.column] ?? null)
+    : null;
 
   useEffect(() => {
     saveGameState(state);
   }, [state]);
+
+  useEffect(() => {
+    if (!state.isStarted || !isCompactLayout) {
+      setSelectedCell(null);
+    }
+  }, [isCompactLayout, state.isStarted]);
 
   useEffect(() => {
     if (!state.isStarted || solved) {
@@ -149,6 +161,7 @@ export function App() {
       ...createStartedGame(current.game.difficulty),
       visualMode: current.visualMode,
     }));
+    setSelectedCell(null);
     setCelebrationKey(0);
   }
 
@@ -175,6 +188,7 @@ export function App() {
       },
       isStarted: false,
     }));
+    setSelectedCell(null);
     setCelebrationKey((current) => current + 1);
     playSoundEffect("success");
   }
@@ -185,6 +199,16 @@ export function App() {
     }
 
     if (game.fixed[position.row][position.column]) {
+      return;
+    }
+
+    if (isCompactLayout) {
+      if (board[position.row][position.column] !== null) {
+        commitBoardChange(position, null);
+        return;
+      }
+
+      setSelectedCell(position);
       return;
     }
 
@@ -210,6 +234,15 @@ export function App() {
     }));
   }
 
+  function chooseCellValue(value: Shape | null) {
+    if (!selectedCell) {
+      return;
+    }
+
+    commitBoardChange(selectedCell, value);
+    setSelectedCell(null);
+  }
+
   function changeDifficulty(difficulty: Difficulty) {
     setState((current) =>
       ({
@@ -219,6 +252,7 @@ export function App() {
         visualMode: current.visualMode,
       }),
     );
+    setSelectedCell(null);
     setCelebrationKey(0);
   }
 
@@ -296,10 +330,10 @@ export function App() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f5f1] text-stone-950">
+    <main className="h-dvh overflow-hidden bg-[#f7f5f1] text-stone-950">
       <Confetti triggerKey={celebrationKey} />
 
-      <section className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-6 sm:px-6 lg:px-8">
+      <section className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col px-3 py-3 sm:px-5 sm:py-4 lg:px-8 lg:py-6">
         <AppHeader
           canRedo={canRedo}
           canUndo={canUndo}
@@ -319,21 +353,21 @@ export function App() {
 
         <div
           className={cn(
-            "grid flex-1 gap-6 py-6 transition-all duration-500",
+            "grid min-h-0 flex-1 gap-3 py-3 transition-all duration-500 sm:gap-4 sm:py-4 lg:gap-6 lg:py-6",
             state.isStarted
-              ? "items-start lg:grid-cols-[minmax(0,1fr)_260px]"
+              ? "grid-rows-[minmax(0,1fr)_auto] items-start lg:grid-cols-[minmax(0,1fr)_260px] lg:grid-rows-1"
               : "place-items-center",
           )}
         >
           <div
             className={cn(
-              "relative w-full",
+              "relative flex min-h-0 w-full items-center justify-center",
               state.isStarted ? "animate-board-active" : "animate-board-preview",
             )}
           >
             <div
               className={cn(
-                "transition duration-500",
+                "flex min-h-0 w-full justify-center transition duration-500",
                 !state.isStarted && "pointer-events-none blur-sm",
               )}
             >
@@ -362,14 +396,16 @@ export function App() {
           </div>
 
           {state.isStarted && (
-            <aside className="animate-side-panel space-y-3">
-              <ShapePicker
-                activeTool={activeTool}
-                mode={state.visualMode}
-                settings={game.settings}
-                shapes={game.settings.shapes}
-                onSelectTool={chooseTool}
-              />
+            <aside className="animate-side-panel min-h-0 space-y-2 lg:space-y-3">
+              <div className="hidden lg:block">
+                <ShapePicker
+                  activeTool={activeTool}
+                  mode={state.visualMode}
+                  settings={game.settings}
+                  shapes={game.settings.shapes}
+                  onSelectTool={chooseTool}
+                />
+              </div>
               <GameStatus
                 complete={complete}
                 hasConflict={hasConflict}
@@ -394,8 +430,41 @@ export function App() {
           onClose={() => setIsHelpOpen(false)}
         />
       )}
+      {selectedCell && (
+        <CellOptionsDialog
+          currentValue={selectedCellValue}
+          mode={state.visualMode}
+          position={selectedCell}
+          settings={game.settings}
+          onChoose={chooseCellValue}
+          onClose={() => setSelectedCell(null)}
+        />
+      )}
     </main>
   );
+}
+
+function useCompactLayout(): boolean {
+  const [isCompact, setIsCompact] = useState(() =>
+    window.matchMedia("(max-width: 1023px)").matches,
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+
+    function updateCompactLayout() {
+      setIsCompact(mediaQuery.matches);
+    }
+
+    updateCompactLayout();
+    mediaQuery.addEventListener("change", updateCompactLayout);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateCompactLayout);
+    };
+  }, []);
+
+  return isCompact;
 }
 
 function areBoardsEqual(first: Board, second: Board): boolean {

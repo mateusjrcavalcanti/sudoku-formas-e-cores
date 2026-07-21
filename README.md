@@ -38,7 +38,9 @@ A missão é preencher as casas vazias usando as seis formas disponíveis, respe
 
 O jogo mostra quando há repetição e dá retornos visuais simples para orientar a criança durante a partida.
 
-Também é possível alternar a representação das peças entre formas geométricas e números coloridos. As regras continuam as mesmas: cada número corresponde a uma forma e não pode se repetir na mesma linha, coluna ou bloco.
+Em telas menores, tocar em uma casa vazia abre uma janela com todas as opções disponíveis para aquela posição. Se a casa já estiver preenchida, o toque remove a peça automaticamente. Em telas maiores, o seletor lateral permanece visível para escolhas mais rápidas.
+
+Também é possível usar o botão de alternância no cabeçalho para trocar a representação das peças entre formas geométricas e números coloridos a qualquer momento. As regras continuam as mesmas: cada número corresponde a uma forma e não pode se repetir na mesma linha, coluna ou bloco.
 
 ## 👩‍🏫 Público-Alvo
 
@@ -103,6 +105,7 @@ Como o repositório será publicado em um subcaminho, o Vite usa:
 src/
   components/
     AppHeader.tsx
+    CellOptionsDialog.tsx
     Piece.tsx
     GameStatus.tsx
     ShapePicker.tsx
